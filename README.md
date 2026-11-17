@@ -1,5 +1,7 @@
 # Keyfall
 
+[![Built on QoreChain](https://build.qorechain.io/badge/keyfall.svg)](https://build.qorechain.io/p/keyfall)
+
 **Prove what a leaked key can still do.**
 
 Keyfall measures a QoreChain contract's **leak surface**: every state change an attacker
