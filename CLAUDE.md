@@ -51,6 +51,8 @@ in `KeyfallRegistry`.
 | Explorer | https://explore.qore.network |
 | Faucet | https://dashboard.qorechain.io/faucet |
 | Docs | https://docs.qorechain.io/developer-guide/evm-precompiles |
+| EVM lane admission | sender needs a registered PQC key **and** an open EVM window (`MsgOpenEVMWindow`, hybrid-signed): blocks ≤17,280, maxTxs ≤1,000, maxValue in uqor incl. fees. `allowed_targets` / `native_only` forbid contract creation |
+| SDK | `@qorechain/sdk` 0.14 (`EthNativeSigner`, `buildRegisterPqcKeyMsg`, `openEvmWindowMsg`, `fetchEvmWindow`) |
 
 Verified on 17 Nov 2026:
 - The RPC serves `eth_getBlockByNumber`, `eth_getStorageAt` (also at past blocks), `eth_getProof`
@@ -86,7 +88,7 @@ them in `.env` or `keys/` (both gitignored).
 
 ## Conventions
 
-- Solidity `^0.8.24`, sources in `src/`, Foundry tests in `test/`, deploy scripts in `script/`.
+- Solidity pinned `0.8.28` (evmVersion paris), sources in `src/`, Foundry tests in `test/`, deploy scripts in `script/`.
 - Node scripts are ESM (`.mjs`) in `scripts/`, using `viem` and `@noble/post-quantum`.
 - Addresses in Solidity must use the correct checksum. The PQC address is all lowercase.
 - Commit small and often. Every commit counts as event activity.
@@ -95,11 +97,18 @@ them in `.env` or `keys/` (both gitignored).
 
 - [x] Project created on build.qorechain.io
 - [x] Repo: licence, README, badge, AI_USAGE.md
-- [x] `src/KeyfallRegistry.sol` written and compiling (solcjs 0.8.28). **No tests, not deployed.**
+- [x] `KeyfallRegistry` reviewed (fixes: rotation proof of possession, `cancel`, pinned 0.8.28) and **deployed**:
+  `0x3cc2c6ccbf30ea28d683a1df3ac8576169eeaf60` (see `deployments.json`), funded with 2 QOR.
+- [x] `scripts/attack-registry.mjs`: 16/16 checks pass on testnet against the real precompile.
+- [x] Deployer has its own ML-DSA-87 key registered and an EVM window (`scripts/setup-evm-access.mjs`).
 - [x] Precompile probe passing
-- [ ] Drill: user decides (account-only option recommended; no contracts)
+- [ ] Drill: registry address goes in the drill form (user registers the drill account in QoreX)
 - Next: see `docs/PLAN.md` → Milestone 1.
 
 ## Log
 
 - **17 Nov.** Idea chosen (see `docs/PITCH.md`), repo scaffolded, precompile verified, project page live.
+- **17 Nov (later).** Registry reviewed and hardened, deployed to testnet, 16/16 attack checks pass.
+  Finding: the EVM lane refuses txs from accounts without a registered PQC key and an open
+  EVM window (codes 26–28). So the drill attacker, holding only a classical key, can't send EVM
+  txs at all unless the account has a window open. Keyfall's findings need a `protocol` layer label for this.

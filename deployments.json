@@ -1,0 +1,8 @@
+{
+  "network": "qorechain-diana",
+  "chainId": 9800,
+  "KeyfallRegistry": "0x3cc2c6ccbf30ea28d683a1df3ac8576169eeaf60",
+  "deployTx": "0xe70681ba626532f68249b213eb4e9001e08c883ff80132fd7d85264bcd72f23b",
+  "keyHash": "0x0e4efe1dbf70d666c0c521ca48236be17f29532d7c840a6e9ebdb366739c6ebe",
+  "block": 10276421
+}

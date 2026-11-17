@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity 0.8.28;
 
 /// @title KeyfallRegistry
 /// @notice Stores hashes of signed Keyfall scan reports and holds a small treasury.
@@ -23,6 +23,7 @@ contract KeyfallRegistry {
     bytes32 public constant ACTION_ANCHOR = keccak256("ANCHOR_REPORT");
     bytes32 public constant ACTION_WITHDRAW = keccak256("WITHDRAW");
     bytes32 public constant ACTION_ROTATE = keccak256("ROTATE_KEY");
+    bytes32 public constant ACTION_CANCEL = keccak256("CANCEL");
 
     /// keccak256 of the controlling ML-DSA-87 public key. The key itself is passed in
     /// calldata (2592 bytes) to avoid storing ~81 slots.
@@ -46,6 +47,7 @@ contract KeyfallRegistry {
     event Withdrawn(address indexed to, uint256 amount, uint256 nonce);
     event KeyRotated(bytes32 indexed oldKeyHash, bytes32 indexed newKeyHash, uint256 nonce);
     event Deposited(address indexed from, uint256 amount);
+    event Cancelled(uint256 nonce);
 
     error BadPubkey();
     error BadSignatureLength();
@@ -54,6 +56,7 @@ contract KeyfallRegistry {
     error AlreadyAnchored();
     error TransferFailed();
     error ZeroValue();
+    error NotCurrentNonce();
 
     constructor(bytes32 initialKeyHash) {
         if (initialKeyHash == bytes32(0)) revert BadPubkey();
@@ -99,13 +102,36 @@ contract KeyfallRegistry {
         emit Withdrawn(to, amount, n);
     }
 
-    function rotateKey(bytes32 newKeyHash, uint256 deadline, bytes calldata pubkey, bytes calldata signature) external {
-        if (newKeyHash == bytes32(0)) revert ZeroValue();
+    /// @notice Rotate the controlling key. Both the current key and the NEW key must sign the
+    ///         same rotation digest (proof of possession), so a typo or an unusable key can
+    ///         never brick the registry.
+    function rotateKey(
+        bytes calldata newPubkey,
+        bytes calldata newKeySignature,
+        uint256 deadline,
+        bytes calldata pubkey,
+        bytes calldata signature
+    ) external {
+        if (newPubkey.length != ML_DSA_87_PUBKEY_LEN) revert BadPubkey();
+        if (newKeySignature.length != ML_DSA_87_SIG_LEN) revert BadSignatureLength();
+        bytes32 newKeyHash = keccak256(newPubkey);
+        if (newKeyHash == keyHash) revert BadPubkey();
         uint256 n = nonce;
-        _authorize(ACTION_ROTATE, abi.encode(newKeyHash), deadline, pubkey, signature);
+        bytes memory payload = abi.encode(newKeyHash);
+        // Proof of possession: computed before _authorize bumps the nonce.
+        bytes32 d = digest(ACTION_ROTATE, payload, deadline);
+        if (!_pqcValid(newPubkey, newKeySignature, d)) revert InvalidPQCSignature();
+        _authorize(ACTION_ROTATE, payload, deadline, pubkey, signature);
         bytes32 old = keyHash;
         keyHash = newKeyHash;
         emit KeyRotated(old, newKeyHash, n);
+    }
+
+    /// @notice Burn the current nonce, invalidating any signed-but-unsubmitted authorization.
+    function cancel(uint256 expectedNonce, uint256 deadline, bytes calldata pubkey, bytes calldata signature) external {
+        if (expectedNonce != nonce) revert NotCurrentNonce();
+        _authorize(ACTION_CANCEL, abi.encode(expectedNonce), deadline, pubkey, signature);
+        emit Cancelled(expectedNonce);
     }
 
     // ---------------------------------------------------------------- views
@@ -124,15 +150,21 @@ contract KeyfallRegistry {
         if (pubkey.length != ML_DSA_87_PUBKEY_LEN || keccak256(pubkey) != keyHash) revert BadPubkey();
         if (sig.length != ML_DSA_87_SIG_LEN) revert BadSignatureLength();
 
-        bytes memory message = abi.encodePacked(digest(action, payload, deadline));
-        (bool ok, bytes memory ret) =
-            PQC_VERIFY.staticcall(abi.encodeWithSignature("pqcVerify(bytes,bytes,bytes)", pubkey, sig, message));
-        // Fail closed: precompile missing/inactive returns empty data; anything but abi-encoded `true` is rejected.
-        if (!ok || ret.length != 32 || abi.decode(ret, (uint256)) != 1) revert InvalidPQCSignature();
+        if (!_pqcValid(pubkey, sig, digest(action, payload, deadline))) revert InvalidPQCSignature();
 
         // Effects after the check, before any external call in the caller.
         unchecked {
             nonce += 1;
         }
+    }
+
+    /// @dev The signed message is the raw 32-byte digest (ML-DSA-87, empty context).
+    ///      Fail closed: an inactive precompile returns empty data, and anything but an
+    ///      ABI-encoded `true` is rejected.
+    function _pqcValid(bytes calldata pubkey, bytes calldata sig, bytes32 d) internal view returns (bool) {
+        (bool ok, bytes memory ret) = PQC_VERIFY.staticcall(
+            abi.encodeWithSignature("pqcVerify(bytes,bytes,bytes)", pubkey, sig, abi.encodePacked(d))
+        );
+        return ok && ret.length == 32 && abi.decode(ret, (uint256)) == 1;
     }
 }

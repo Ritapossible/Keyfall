@@ -46,3 +46,8 @@ every work session.
 ## Log
 
 - **17 Nov.** Idea, architecture, precompile probe, registry draft, repo scaffold.
+- **17 Nov (later).** Pre-deploy security review requested by the author. AI found no critical or high issues
+  and fixed three lower ones (rotation could brick the registry with a wrong key hash → proof of
+  possession; no way to revoke a signed-but-unsent authorization → `cancel`; floating pragma → pinned).
+  The first deploy was refused by the chain (no PQC key or EVM window); AI read the docs and SDK types
+  and wrote the hybrid-signed setup. Verified by 16 on-chain attack checks, all passing.

@@ -4,7 +4,7 @@
 // Usage: node scripts/attack-registry.mjs
 import { randomBytes } from 'node:crypto';
 import { ml_dsa87 } from '@noble/post-quantum/ml-dsa.js';
-import { decodeErrorResult, keccak256, toHex, parseEther, encodeFunctionData } from 'viem';
+import { decodeErrorResult, keccak256, toHex, encodeFunctionData, encodeAbiParameters } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { RPC, publicClient, deployer } from './lib.mjs';
 import { abi, deployment, anchorCall, withdrawCall, signFor } from './registry.mjs';
@@ -42,7 +42,15 @@ const pk = toHex(publicKey);
 expect('withdraw with garbage signature', await simulate(encodeFunctionData({ abi, functionName: 'withdraw', args: [attacker, 1n, later, pk, garbage] })), 'InvalidPQCSignature');
 const evil = ml_dsa87.keygen(randomBytes(32));
 expect("withdraw signed by attacker's own ML-DSA-87 key", await simulate(await withdrawCall(REG, { to: attacker, amount: 1n, deadline: later }, evil)), 'BadPubkey');
-expect('rotateKey to attacker key, garbage signature', await simulate(encodeFunctionData({ abi, functionName: 'rotateKey', args: [keccak256(toHex(evil.publicKey)), later, pk, garbage] })), 'InvalidPQCSignature');
+{ // rotation: attacker proves possession of their own new key but cannot produce the owner's signature
+  const payload = encodeAbiParameters([{ type: 'bytes32' }], [keccak256(toHex(evil.publicKey))]);
+  const own = await signFor(REG, 'ACTION_ROTATE', payload, later, evil); // valid PoP by the new (attacker) key
+  expect('rotateKey to attacker key (valid PoP, garbage owner sig)', await simulate(encodeFunctionData({ abi, functionName: 'rotateKey', args: [toHex(evil.publicKey), own.sig, later, pk, garbage] })), 'InvalidPQCSignature');
+  expect('rotateKey with malformed new pubkey', await simulate(encodeFunctionData({ abi, functionName: 'rotateKey', args: ['0x1234', own.sig, later, pk, garbage] })), 'BadPubkey');
+  const ownerSig = await signFor(REG, 'ACTION_ROTATE', payload, later);
+  expect('rotateKey: owner signs but new-key PoP is garbage', await simulate(encodeFunctionData({ abi, functionName: 'rotateKey', args: [toHex(evil.publicKey), garbage, later, pk, ownerSig.sig] })), 'InvalidPQCSignature');
+}
+expect('cancel with garbage signature', await simulate(encodeFunctionData({ abi, functionName: 'cancel', args: [await publicClient.readContract({ address: REG, abi, functionName: 'nonce' }), later, pk, garbage] })), 'InvalidPQCSignature');
 { // valid owner signature for withdraw-to-owner, attacker swaps recipient
   const okData = await withdrawCall(REG, { to: account.address, amount: 1n, deadline: later });
   const { args } = (await import('viem')).decodeFunctionData({ abi, data: okData });
@@ -71,6 +79,17 @@ if (bal > 0n) {
   expect(`real withdraw(1 wei) tx ${h2.slice(0, 12)}…`, { ok: rc2.status === 'success', name: rc2.status }, 'success');
   expect('replay of the exact withdraw calldata (nonce consumed)', await simulate(wData), 'InvalidPQCSignature');
 } else console.log('SKIP  withdraw cases (registry unfunded)');
+
+{ // cancel: a signed-but-unsubmitted withdraw dies once its nonce is burned
+  const pending = await withdrawCall(REG, { to: account.address, amount: 1n, deadline: later });
+  const n = await publicClient.readContract({ address: REG, abi, functionName: 'nonce' });
+  const cp = encodeAbiParameters([{ type: 'uint256' }], [n]);
+  const c = await signFor(REG, 'ACTION_CANCEL', cp, later);
+  const h3 = await wallet.sendTransaction({ to: REG, data: encodeFunctionData({ abi, functionName: 'cancel', args: [n, later, c.pubkey, c.sig] }), gas: 2_000_000n });
+  const rc3 = await publicClient.waitForTransactionReceipt({ hash: h3 });
+  expect(`real cancel tx ${h3.slice(0, 12)}…`, { ok: rc3.status === 'success', name: rc3.status }, 'success');
+  expect('previously signed withdraw after cancel', await simulate(pending), 'InvalidPQCSignature');
+}
 
 console.log(`\n${pass} passed, ${fail} failed. nonce now ${await publicClient.readContract({ address: REG, abi, functionName: 'nonce' })}`);
 process.exit(fail ? 1 : 0);

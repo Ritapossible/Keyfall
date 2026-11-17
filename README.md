@@ -58,7 +58,15 @@ npm run probe
 - `src/KeyfallRegistry.sol` — stores hashes of signed scan reports and holds a small treasury.
   Every write needs an ML-DSA-87 signature over a digest bound to chain id, contract, action,
   nonce and deadline. `msg.sender` is never trusted, so a leaked classical key has no privilege.
-  *Not yet deployed or tested.*
+  Key rotation needs proof of possession of the new key; `cancel` revokes unsent authorizations.
+
+| Deployment (testnet) | |
+|---|---|
+| KeyfallRegistry | [`0x3cc2c6ccbf30ea28d683a1df3ac8576169eeaf60`](https://explore.qore.network) (`qor18npvdn9lxr4z345r580n4jzhv957atmqa8mhkt`) |
+| Deploy tx | `0xe70681ba626532f68249b213eb4e9001e08c883ff80132fd7d85264bcd72f23b` |
+
+`node scripts/attack-registry.mjs` runs 16 attack and replay checks against the live contract
+using the real PQC precompile. Current result: **16/16 pass**.
 
 ## Limits (stated up front)
 
