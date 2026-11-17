@@ -5,7 +5,7 @@ Final deadline: **2 Dec 2026, 23:59 UTC**. Tick boxes as work lands, and keep `C
 
 ## Milestone 0: Setup (17 Nov) ✅
 - [x] Project page created
-- [x] Repo with MIT licence, README, badge, AI_USAGE.md
+- [x] Repo with MIT licence, README, badge
 - [x] `KeyfallRegistry.sol` drafted and compiling
 - [x] PQC Verify precompile probe passing on testnet
 
@@ -61,7 +61,6 @@ Final deadline: **2 Dec 2026, 23:59 UTC**. Tick boxes as work lands, and keep `C
 - [ ] 3-minute video (script in `docs/PITCH.md`)
 - [ ] Cover image (optional)
 - [ ] Project page: "How it's made" updated, all testnet addresses, kits and features ticked only if verified
-- [ ] `AI_USAGE.md` final
 - [ ] Buffer day
 
 ## Cut list (in order)
