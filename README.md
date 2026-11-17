@@ -68,6 +68,13 @@ npm run probe
 - v1 scans verified contracts only.
 - Off-chain relayers and frontends are out of scope.
 
+## Docs
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): threat model, pipeline, severity rules
+- [docs/PLAN.md](docs/PLAN.md): milestones to 2 Dec
+- [docs/PITCH.md](docs/PITCH.md): pitch and video script
+- [CLAUDE.md](CLAUDE.md): project memory, decisions and verified network facts
+
 ## Network
 
 EVM RPC `https://evm-testnet.qore.host` · EVM chain id 9800 · PQC Verify `0x0000000000000000000000000000000000000a01`
