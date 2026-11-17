@@ -1,12 +1,48 @@
 # AI usage
 
-Keyfall is built with AI assistance (Claude Code), documented here for the AI-Native award.
+Keyfall is built by Rita (@Ritapossible) with **Claude Code** as a pair programmer. This file
+records what the AI did, what the human did, and how AI output was checked. It's updated
+every work session.
 
-| Area | How AI was used | Human role |
-|---|---|---|
-| Idea and threat model | Brainstormed and pressure-tested the idea against existing hackathon projects | Chose the direction, owns decisions |
-| `src/KeyfallRegistry.sol` | First draft of the PQC-gated registry | Review, testing, deployment |
-| `scripts/probe-precompile.mjs` | Wrote the read-only precompile probe | Ran and checked results |
-| Docs | Drafted README | Edited |
+## Principles
 
-All AI-written code is reviewed before deployment. This file is updated as the build continues.
+1. **The human decides, the AI drafts.** Scope, threat model, trade-offs and what ships are
+   decided by the author. The AI proposes and implements.
+2. **Nothing is trusted because the AI said it.** Each claim about QoreChain is checked
+   against the official docs or the live testnet before code depends on it. Each contract
+   change is checked by tests.
+3. **No AI in the scanner's verdicts.** Keyfall's findings come from executing transactions
+   on a fork and applying fixed severity rules. An LLM never decides whether something is a
+   vulnerability. That keeps results reproducible and free of hallucinated findings.
+4. **Secrets never go to the AI.** Private keys stay in gitignored files and are never pasted
+   into prompts.
+
+## Where AI was used
+
+| Area | What the AI did | What the human did | How it was verified |
+|---|---|---|---|
+| Idea selection | Compared candidate ideas against the ~77 projects already registered and against patterns from past hackathon winners. Flagged crowded categories (PQC vaults, agent guardians, inheritance) | Picked the direction and category | Read the projects board directly |
+| Threat model and architecture (`docs/ARCHITECTURE.md`) | Drafted the two-worlds method, the replay-harvesting attack class and the severity rules | Reviewed and accepted the scope, and the "never cut replay harvesting" decision | Design review; the rules will be measured on the benchmark |
+| Network research | Read the QoreChain docs for the precompile address, interface, sizes, gas and failure mode | Confirmed the facts were needed | **Live testnet probes**: RPC methods needed for forking (`eth_getStorageAt` at past blocks, `eth_getProof`, `eth_getCode`); `debug_traceCall` found to be unavailable |
+| `scripts/probe-precompile.mjs` | Wrote a read-only `eth_call` probe of PQC Verify (`0x…0a01`) | Ran it | Real ML-DSA-87 signature → `true`; tampered signature → `false`; altered message → `false` |
+| `src/KeyfallRegistry.sol` | Drafted the PQC-gated registry: no `msg.sender` trust, a digest bound to chain id, contract, action, nonce and deadline, and fail-closed handling when the precompile returns empty data | Reviewed the security model | Compiles (solc 0.8.28). It caught its own address-checksum compile error. **Tests are pending (Milestone 1)** |
+| Docs (`README`, `CLAUDE.md`, `docs/`) | Drafted | Edited and approved | n/a |
+
+## Problems the AI caught or that we caught in AI output
+
+- An early idea (a PQC social-recovery vault) was dropped after checking the board showed at
+  least 5 near-duplicates.
+- Precompile addresses suggested by another AI assistant were checked against the official
+  docs before use. PQC key status turned out to be a REST endpoint, not a precompile as
+  first suggested.
+- The docs list EVM chain id 9801 on one page, but the testnet RPC returns 9800. The code
+  uses the value read from the chain.
+
+## Tooling
+
+- Claude Code (Anthropic), in cloud sessions on this repository
+- `CLAUDE.md` is the shared project memory that keeps sessions consistent
+
+## Log
+
+- **17 Nov.** Idea, architecture, precompile probe, registry draft, repo scaffold.
