@@ -3,6 +3,8 @@
 //   2. open an EVM authorisation window (hybrid secp256k1 + ML-DSA-87 signed)
 // The deployer's PQC key is stored in keys/deployer-mldsa87.json (gitignored).
 // Usage: node scripts/setup-evm-access.mjs [blocks] [maxTxs] [maxValueQOR]
+//   ACCOUNT=drill  → use keys/drill.json + keys/drill-mldsa87.json (creating them if missing)
+//   NO_WINDOW=1    → only register the PQC key, do not open an EVM window
 import { writeFileSync } from 'node:fs';
 import { StargateClient } from '@cosmjs/stargate';
 import { secp256k1 } from '@noble/curves/secp256k1.js';
@@ -17,13 +19,18 @@ const RPC = 'https://rpc-testnet.qore.host';
 const CHAIN = 'qorechain-diana';
 const [blocks = 17280, maxTxs = 100, maxQor = 30] = process.argv.slice(2).map(Number);
 
-const { privateKey } = readJson('deployer.json');
-if (!hasKey('deployer-mldsa87.json')) {
+const NAME = process.env.ACCOUNT ?? 'deployer';
+if (!hasKey(`${NAME}.json`)) {
+  const { generatePrivateKey } = await import('viem/accounts');
+  writeFileSync(new URL(`${NAME}.json`, KEYS), JSON.stringify({ privateKey: generatePrivateKey() }), { mode: 0o600 });
+}
+const { privateKey } = readJson(`${NAME}.json`);
+if (!hasKey(`${NAME}-mldsa87.json`)) {
   const kp = generatePqcKeypair();
-  writeFileSync(new URL('deployer-mldsa87.json', KEYS), JSON.stringify({
+  writeFileSync(new URL(`${NAME}-mldsa87.json`, KEYS), JSON.stringify({
     publicKey: Buffer.from(kp.publicKey).toString('hex'), secretKey: Buffer.from(kp.secretKey).toString('hex') }), { mode: 0o600 });
 }
-const k = readJson('deployer-mldsa87.json');
+const k = readJson(`${NAME}-mldsa87.json`);
 const pqc = { publicKey: Uint8Array.from(Buffer.from(k.publicKey, 'hex')), secretKey: Uint8Array.from(Buffer.from(k.secretKey, 'hex')) };
 
 const priv = Buffer.from(privateKey.slice(2), 'hex');
@@ -58,6 +65,7 @@ async function send(signer, messages, gas) {
 }
 
 // 1. register the PQC key (skip if already registered)
+if (process.env.PRINT_ONLY) process.exit(0);
 const status = await get(`/qorechain/pqc/v1/account/${account.cosmos}`);
 if (!status.found) {
   const pop = signProofOfPossession({ chainId: CHAIN, algorithmId: 1, account: account.cosmos, keypair: pqc });
@@ -72,6 +80,7 @@ if (!status.found) {
   console.log('PQC key registered, tx', h);
 } else console.log('PQC key already registered');
 
+if (process.env.NO_WINDOW) { console.log('NO_WINDOW set: done'); process.exit(0); }
 // 2. open the EVM window (hybrid-signed)
 const hybrid = new EthNativeSigner(account, { signMode: 'hybrid', rest: REST });
 const msg = openEvmWindowMsg({ sender: account.cosmos, blocks, maxTxs, maxValue: String(maxQor * 1_000_000) });
