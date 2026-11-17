@@ -102,7 +102,11 @@ them in `.env` or `keys/` (both gitignored).
 - [x] `scripts/attack-registry.mjs`: 16/16 checks pass on testnet against the real precompile.
 - [x] Deployer has its own ML-DSA-87 key registered and an EVM window (`scripts/setup-evm-access.mjs`).
 - [x] Precompile probe passing
-- [ ] Drill: registry address goes in the drill form (user registers the drill account in QoreX)
+- [x] Drill account created here (QoreX can't export a hex key): `0xf4dDE5b2d56276e43Ce7AF35741d086C100DD19E`
+  / `qor17nw7tvk4vfmwg0884u6hg8ggdsgqm5v709vwdl`. 6 QOR, own ML-DSA-87 key registered, **no EVM window**
+  (deliberate). Classical-only EVM send from it was refused by the chain (verified).
+- [ ] **18 Nov (UTC): run `node scripts/drill-proof.mjs`** (needs keys/drill.json + keys/drill-mldsa87.json),
+  then submit the printed hash on the project page by 19 Nov 23:59 UTC.
 - Next: see `docs/PLAN.md` → Milestone 1.
 
 ## Log
