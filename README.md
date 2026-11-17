@@ -74,10 +74,15 @@ npm run probe
 - [docs/PLAN.md](docs/PLAN.md): milestones to 2 Dec
 - [docs/PITCH.md](docs/PITCH.md): pitch and video script
 - [CLAUDE.md](CLAUDE.md): project memory, decisions and verified network facts
+- [AI_USAGE.md](AI_USAGE.md): how AI was used and how its output was verified
 
 ## Network
 
 EVM RPC `https://evm-testnet.qore.host` · EVM chain id 9800 · PQC Verify `0x0000000000000000000000000000000000000a01`
+
+## Team
+
+- **Rita** ([@Ritapossible](https://github.com/Ritapossible)): author
 
 ## License
 

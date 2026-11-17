@@ -33,6 +33,7 @@ in `KeyfallRegistry`.
 - Kits and network features ticked on the page are **verified against the code and testnet**.
   Tick only what is really used.
 - Commits must happen during the event; the QoreChain GitHub App must be installed.
+- AI-Native award: keep `AI_USAGE.md` current.
 
 ## Network facts (verified)
 
@@ -93,7 +94,7 @@ them in `.env` or `keys/` (both gitignored).
 ## Current state
 
 - [x] Project created on build.qorechain.io
-- [x] Repo: licence, README, badge
+- [x] Repo: licence, README, badge, AI_USAGE.md
 - [x] `src/KeyfallRegistry.sol` written and compiling (solcjs 0.8.28). **No tests, not deployed.**
 - [x] Precompile probe passing
 - [ ] Drill: user decides (account-only option recommended; no contracts)
