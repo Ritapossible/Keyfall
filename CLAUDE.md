@@ -105,8 +105,10 @@ them in `.env` or `keys/` (both gitignored).
 - [x] Drill account created here (QoreX can't export a hex key): `0xf4dDE5b2d56276e43Ce7AF35741d086C100DD19E`
   / `qor17nw7tvk4vfmwg0884u6hg8ggdsgqm5v709vwdl`. 6 QOR, own ML-DSA-87 key registered, **no EVM window**
   (deliberate). Classical-only EVM send from it was refused by the chain (verified).
-- [ ] **18 Nov (UTC): run `node scripts/drill-proof.mjs`** (needs keys/drill.json + keys/drill-mldsa87.json),
-  then submit the printed hash on the project page by 19 Nov 23:59 UTC.
+- [x] Drill proof sent 18 Nov 10:31 UTC: native tx `B4A1EEB421159F800BDDD827305D41894E626B20DFBCE47A28DFA9FF1B78C622`
+  (hybrid-signed, code 0, height 10310557). **User submits this hash on the project page by 19 Nov 23:59 UTC.**
+- [x] Drill-day check 10:30 UTC: registry 2 QOR (minus 1 wei test), nonce 3, key unchanged; drill account
+  5.93 QOR, no EVM window. Nothing lost.
 - Next: see `docs/PLAN.md` → Milestone 1.
 
 ## Log
@@ -116,3 +118,5 @@ them in `.env` or `keys/` (both gitignored).
   Finding: the EVM lane refuses txs from accounts without a registered PQC key and an open
   EVM window (codes 26–28). So the drill attacker, holding only a classical key, can't send EVM
   txs at all unless the account has a window open. Keyfall's findings need a `protocol` layer label for this.
+- **18 Nov.** Drill proof sent; nothing lost so far. Grok review: build a minimal end-to-end scan
+  (report.json + replay) before anything else.
