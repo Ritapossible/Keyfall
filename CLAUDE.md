@@ -61,8 +61,10 @@ Verified on 17 Nov 2026:
 - `scripts/probe-precompile.mjs`: a `@noble/post-quantum` v0.7.1 `ml_dsa87.sign(msg, sk)` signature
   verifies on-chain (`true`). A tampered signature or altered message returns `false`. No context
   string is used.
-- **Not yet verified:** that `anvil --fork-url` runs cleanly against this RPC (Foundry wasn't
-  installable in the first session).
+- **18 Nov:** `anvil --fork-url` works (Foundry 1.5.1). `debug_traceTransaction` with `callTracer` works on the
+  fork and shows the STATICCALL input to the precompile.
+- `eth_getLogs` max range is 10,000 blocks. The explorer has **no API** (404s), and Cosmos tx search
+  doesn't index EVM txs, so tx history comes from logs, and creation block from binary search on `eth_getCode`.
 
 ## Decisions (do not reopen without a reason)
 
@@ -70,8 +72,10 @@ Verified on 17 Nov 2026:
    the board (Q-Day Readiness Audit, Qore PQ Health, Fenestella, qorechain-pq-check).
 2. **Replay harvesting is the core feature.** It's the QoreChain-native bug class and the
    answer to "this is just a generic fuzzer". Never cut it.
-3. **Reuse Foundry, don't write a fuzzer.** Generate invariant-test harnesses and let `forge`
-   fuzz and shrink.
+3. **Reuse Foundry, don't write a fuzzer.** v0 drives `anvil` directly from Node (one call per function,
+   fixed argument candidates). Next step is generated `forge` invariant harnesses for sequences and fuzzing.
+8. **Replay verification by trace, not a lookup table.** Replays run with an accept-all stub, the tx is
+   traced, and every precompile input is verified off-chain with ML-DSA-87. Only all-valid replays count.
 4. **Severity comes from rules over the state diff, never from an LLM.** Precision is 100% by
    construction: every finding has a replay that works.
 5. **v1 scans verified contracts only.** Recovering an ABI from bytecode comes later.
@@ -109,7 +113,12 @@ them in `.env` or `keys/` (both gitignored).
   (hybrid-signed, code 0, height 10310557). **User submits this hash on the project page by 19 Nov 23:59 UTC.**
 - [x] Drill-day check 10:30 UTC: registry 2 QOR (minus 1 wei test), nonce 3, key unchanged; drill account
   5.93 QOR, no EVM window. Nothing lost.
-- Next: see `docs/PLAN.md` → Milestone 1.
+- [x] **Scanner v0 works end to end** (`cli/keyfall.mjs`): NoNonce → Critical (replay), UnguardedSetter → High +
+  Medium, SafeVault → clean, KeyfallRegistry → clean. Replay scripts verified standalone.
+- [x] 4 reports anchored in KeyfallRegistry (`scripts/anchor-report.mjs`, `reports/*/attestation.json`).
+- [x] Benchmark vaults deployed (`deployments.json` → `bench`), owner key `keys/bench-mldsa87.json`.
+- Foundry lives in the session scratchpad; set `KEYFALL_ANVIL` or put anvil on PATH.
+- Next: see `docs/PLAN.md` → Milestone 3 remainder (more benchmarks, sequences/fuzz, explorer-less ABI).
 
 ## Log
 
@@ -118,5 +127,7 @@ them in `.env` or `keys/` (both gitignored).
   Finding: the EVM lane refuses txs from accounts without a registered PQC key and an open
   EVM window (codes 26–28). So the drill attacker, holding only a classical key, can't send EVM
   txs at all unless the account has a window open. Keyfall's findings need a `protocol` layer label for this.
-- **18 Nov.** Drill proof sent; nothing lost so far. Grok review: build a minimal end-to-end scan
+- **18 Nov.** Drill proof sent (accepted on the page); nothing lost so far. Grok review: build a minimal end-to-end scan
   (report.json + replay) before anything else.
+- **18 Nov (later).** Built it: 3 benchmark vaults on testnet, scanner v0, 4 reports anchored on-chain. All
+  results correct. Deployer EVM window reopened (17,280 blocks, 200 txs, 40 QOR).

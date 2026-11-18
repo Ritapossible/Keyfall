@@ -1,0 +1,95 @@
+{
+  "keyfall": "0.1.0",
+  "network": "qorechain-diana",
+  "chainId": 9800,
+  "target": "0x67508e00454A1f66BF4564C8a3c3B913C878b1b1",
+  "codeHash": "0xbebfda7888056e1ab744e2a807be990eb304dfe4c6d9d56975d548e2a0ae0d55",
+  "source": {
+    "file": "bench/UnguardedSetter.sol",
+    "contract": "UnguardedSetter",
+    "bytecodeMatches": true
+  },
+  "forkBlock": "10311193",
+  "createdBlock": "10311025",
+  "deployer": "0x3184924416dF6C43b4c66171fBc75121fF27465B",
+  "threatModel": "attacker holds the classical ECDSA key of every privileged account and sees all past calldata; cannot forge ML-DSA-87",
+  "accounts": {
+    "attacker": "0x9e0cFdA32B3FD575206D5070DeE51F72d6d390bc",
+    "privileged": {
+      "0x8Ad48346fc47f920dE6c4e56F0837b5C21d25102": "guardian()",
+      "0x3184924416dF6C43b4c66171fBc75121fF27465B": "owner()"
+    }
+  },
+  "coverage": {
+    "functions": [
+      "freeze()",
+      "setGuardian(address)",
+      "withdraw(address,uint256,uint256,bytes,bytes)"
+    ],
+    "qdayCalls": 20,
+    "harvestedTxs": 1,
+    "replays": [
+      {
+        "sourceTx": "0x4f6c06539be66bd9402fc065781d3e4253d7d7f754dcd43175831c5cfa297ed0",
+        "function": "withdraw(address,uint256,uint256,bytes,bytes)",
+        "replayed": true,
+        "pqcChecks": 1,
+        "allSignaturesValid": false
+      }
+    ]
+  },
+  "callableWithoutEffect": [],
+  "leakSurface": 2,
+  "summary": {
+    "critical": 0,
+    "high": 1,
+    "medium": 1
+  },
+  "findings": [
+    {
+      "severity": "High",
+      "layer": "contract",
+      "kind": "unguarded",
+      "title": "setGuardian(address) succeeds for owner() without any PQC signature",
+      "function": "setGuardian(address)",
+      "caller": "0x3184924416dF6C43b4c66171fBc75121fF27465B",
+      "callerRole": "owner()",
+      "calldata": "0x8a0dac4a0000000000000000000000009e0cfda32b3fd575206d5070dee51f72d6d390bc",
+      "valueOut": "0",
+      "changes": [
+        {
+          "getter": "guardian()",
+          "before": "0x8Ad48346fc47f920dE6c4e56F0837b5C21d25102",
+          "after": "0x9e0cFdA32B3FD575206D5070DeE51F72d6d390bc"
+        }
+      ],
+      "id": "KF-01",
+      "valueOutQOR": "0"
+    },
+    {
+      "severity": "Medium",
+      "layer": "contract",
+      "kind": "unguarded",
+      "title": "freeze() succeeds for guardian() without any PQC signature",
+      "function": "freeze()",
+      "caller": "0x8Ad48346fc47f920dE6c4e56F0837b5C21d25102",
+      "callerRole": "guardian()",
+      "calldata": "0x62a5af3b",
+      "valueOut": "0",
+      "changes": [
+        {
+          "getter": "frozen()",
+          "before": false,
+          "after": true
+        }
+      ],
+      "id": "KF-02",
+      "valueOutQOR": "0"
+    }
+  ],
+  "limits": [
+    "A clean result means nothing was found in these runs, not proof of safety.",
+    "Protocol-layer admission (EVM windows) is not modelled on the fork.",
+    "v0: one call per function (no sequences), fixed argument candidates."
+  ]
+}

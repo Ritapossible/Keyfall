@@ -42,6 +42,37 @@ High, griefing = Medium. Every finding ships with a minimal replay, so there are
 address ─► Resolver ─► Harness generator ─► forge (fork + fuzz) ─► Classifier ─► Report ─► Attestor
 ```
 
+## Results (v0, 18 Nov 2026, testnet)
+
+`keyfall scan` against three benchmark vaults deployed on testnet, plus Keyfall's own registry.
+Every report is signed with ML-DSA-87 and anchored in `KeyfallRegistry`.
+
+| Contract | Planted bug | Keyfall finding | Report |
+|---|---|---|---|
+| `NoNonce` `0xc1a6…3ad9` | PQC digest has no nonce | **Critical**: replaying a past PQC-authorized `withdraw` drains the vault (signature verified genuine off-chain) | [report](reports/0xc1a690a79d4f7cbd2ada7925ae5454f3a2783ad9/report.json) |
+| `UnguardedSetter` `0x6750…b1b1` | guardian set via `msg.sender` | **High** `setGuardian` by owner's classical key · **Medium** `freeze` by guardian's key | [report](reports/0x67508e00454a1f66bf4564c8a3c3b913c878b1b1/report.json) |
+| `SafeVault` `0xb03b…21d3` | none | **clean** (0 findings) | [report](reports/0xb03b09742168f16a5a8f75b0a744788370a421d3/report.json) |
+| `KeyfallRegistry` `0x3cc2…af60` | none | **clean**; all 3 past txs fail to replay | [report](reports/0x3cc2c6ccbf30ea28d683a1df3ac8576169eeaf60/report.json) |
+
+Each finding has a standalone replay script in `reports/<address>/replays/` (local fork only).
+
+## Usage
+
+```bash
+npm install
+# needs Foundry's anvil on PATH (or KEYFALL_ANVIL=/path/to/anvil)
+node cli/keyfall.mjs scan <address> --source <file.sol:Contract> [--account 0x…]
+node scripts/anchor-report.mjs reports/<address>/report.json   # sign + anchor on-chain
+```
+
+How v0 decides, in one paragraph: on a local fork, the **Q-Day world** stubs the PQC precompile to
+reject and calls every state-changing function as each privileged account (getters, deployer,
+EIP-1967 admin) and as a keyless attacker. The **replay world** re-sends every past transaction
+to the target as the attacker with the precompile stubbed to accept, traces the call, and verifies
+every signature the contract checked with real ML-DSA-87 off-chain. A replay counts only if all
+of them are genuinely valid, so the fork behaves exactly as the chain would. Severity: value out
+= Critical, control change = High, pause/freeze/nonce change = Medium.
+
 ## Verified so far
 
 - `scripts/probe-precompile.mjs` calls the testnet PQC Verify precompile with `eth_call`

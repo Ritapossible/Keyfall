@@ -1,0 +1,53 @@
+{
+  "keyfall": "0.1.0",
+  "network": "qorechain-diana",
+  "chainId": 9800,
+  "target": "0xb03B09742168F16a5A8F75b0A744788370A421d3",
+  "codeHash": "0xf0bb6f582e9ab5b0ad2a82d7ad91a9cb58cbc1dca1ec27d3dafecc64acd676f8",
+  "source": {
+    "file": "bench/SafeVault.sol",
+    "contract": "SafeVault",
+    "bytecodeMatches": true
+  },
+  "forkBlock": "10311201",
+  "createdBlock": "10311019",
+  "deployer": "0x3184924416dF6C43b4c66171fBc75121fF27465B",
+  "threatModel": "attacker holds the classical ECDSA key of every privileged account and sees all past calldata; cannot forge ML-DSA-87",
+  "accounts": {
+    "attacker": "0x8a1AB55E96437981AA98b9F0318a1218656F9162",
+    "privileged": {
+      "0x8Ad48346fc47f920dE6c4e56F0837b5C21d25102": "guardian()",
+      "0x3184924416dF6C43b4c66171fBc75121fF27465B": "deployer"
+    }
+  },
+  "coverage": {
+    "functions": [
+      "setGuardian(address,uint256,bytes,bytes)",
+      "withdraw(address,uint256,uint256,bytes,bytes)"
+    ],
+    "qdayCalls": 24,
+    "harvestedTxs": 1,
+    "replays": [
+      {
+        "sourceTx": "0x73a922c7c33978d6231fdd9313811de1a2ab4784d86b49996d98925158f91bdb",
+        "function": "withdraw(address,uint256,uint256,bytes,bytes)",
+        "replayed": true,
+        "pqcChecks": 1,
+        "allSignaturesValid": false
+      }
+    ]
+  },
+  "callableWithoutEffect": [],
+  "leakSurface": 0,
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0
+  },
+  "findings": [],
+  "limits": [
+    "A clean result means nothing was found in these runs, not proof of safety.",
+    "Protocol-layer admission (EVM windows) is not modelled on the fork.",
+    "v0: one call per function (no sequences), fixed argument candidates."
+  ]
+}

@@ -10,8 +10,8 @@ Final deadline: **2 Dec 2026, 23:59 UTC**. Tick boxes as work lands, and keep `C
 - [x] PQC Verify precompile probe passing on testnet
 
 ## Milestone 1: Registry on testnet (18–19 Nov)
-- [ ] Install Foundry and add `foundry.toml`
-- [ ] Spike: `anvil --fork-url https://evm-testnet.qore.host` and `cast call` a contract on the fork
+- [x] Install Foundry
+- [x] Spike: `anvil --fork-url https://evm-testnet.qore.host` and `cast call` a contract on the fork
 - [ ] `src/test/PQCStub.sol`: reject-all stub and a test-key stub
 - [ ] `test/KeyfallRegistry.t.sol`: valid anchor; garbage signature from any sender; replay of the
       same signature; anchor signature reused for withdraw (action binding); expired deadline;
@@ -19,16 +19,16 @@ Final deadline: **2 Dec 2026, 23:59 UTC**. Tick boxes as work lands, and keep `C
 - [ ] `scripts/keygen.mjs`: generate the registry's ML-DSA-87 key into `keys/` (gitignored)
 - [ ] `scripts/sign.mjs`: read `digest()` from the chain, sign, print calldata
 - [ ] `script/Deploy.s.sol`: deploy to testnet
-- [ ] Anchor one test report on testnet
+- [x] Anchor one test report on testnet (4 real scan reports anchored 18 Nov)
 - [ ] Add the registry address to the project page, and tick the PQC Verify network feature
 - [ ] Drill (if entered): one tx from the drill account on 18 Nov, hash submitted by 19 Nov
 
 ## Milestone 2: Benchmark (20–21 Nov)
 - [ ] `bench/` with 10 vaults (each 30–80 lines):
-  1. `SafeVault`: correct (nonce, domain, deadline, PQC on everything)
+  1. `SafeVault` ✅ deployed: correct (nonce, domain, deadline, PQC on everything)
   2. `SafeTimelockVault`: correct, with a timelock
-  3. `UnguardedSetter`: `setGuardian` without PQC
-  4. `NoNonce`: a PQC-signed withdraw can be replayed
+  3. `UnguardedSetter` ✅ deployed: `setGuardian` without PQC
+  4. `NoNonce` ✅ deployed: a PQC-signed withdraw can be replayed
   5. `NoDomain`: the signature isn't bound to the contract, so it replays across two instances
   6. `NoDeadline`: an old signature is valid forever (only matters with nonce gaps)
   7. `ActionConfusion`: the same digest is accepted for withdraw and setLimit
@@ -38,16 +38,16 @@ Final deadline: **2 Dec 2026, 23:59 UTC**. Tick boxes as work lands, and keep `C
 - [ ] Deploy all 10 to testnet (more testnet addresses for the page)
 
 ## Milestone 3: Scanner core (22–26 Nov)
-- [ ] `cli/` skeleton (TypeScript, viem): `keyfall scan <address>`
+- [x] `cli/` skeleton (Node ESM, viem): `keyfall scan <address>`
 - [ ] Resolver: explorer ABI fetch, privileged-account discovery, value at risk
 - [ ] Harness generator: fork, stub, handler, invariants
 - [ ] Runner: invoke `forge`, parse the results and counterexamples
-- [ ] Replay harvester: collect PQC-signed txs and resubmit them on the fork
-- [ ] Classifier and `report.json`
+- [x] Replay harvester: collect past txs (logs) and resubmit them on the fork, verifying signatures off-chain
+- [x] Classifier and `report.json` (+ replay scripts)
 - [ ] Target: 8/8 planted bugs found, 0 findings on the 2 correct vaults
 
 ## Milestone 4: Attestation and CI (27–28 Nov)
-- [ ] Attestor: sign `report.json` and anchor it in the registry
+- [x] Attestor: sign `report.json` and anchor it in the registry
 - [ ] HTML report with replay commands
 - [ ] GitHub Action (cut first if late)
 

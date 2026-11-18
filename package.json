@@ -9,7 +9,9 @@
     "url": "git+https://github.com/Ritapossible/keyfall.git"
   },
   "scripts": {
-    "probe": "node scripts/probe-precompile.mjs"
+    "probe": "node scripts/probe-precompile.mjs",
+    "keyfall": "node cli/keyfall.mjs",
+    "anchor": "node scripts/anchor-report.mjs"
   },
   "dependencies": {
     "@noble/post-quantum": "^0.7.1",

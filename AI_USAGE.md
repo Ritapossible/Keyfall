@@ -51,3 +51,7 @@ every work session.
   possession; no way to revoke a signed-but-unsent authorization → `cancel`; floating pragma → pinned).
   The first deploy was refused by the chain (no PQC key or EVM window); AI read the docs and SDK types
   and wrote the hybrid-signed setup. Verified by 16 on-chain attack checks, all passing.
+- **18 Nov.** AI wrote the benchmark vaults, scanner v0 and the report anchoring. Design choice made to keep
+  verdicts free of AI judgement: replayed signatures are checked with real ML-DSA-87, severity is a fixed
+  rule. Verified by scanning all four contracts (expected results matched) and running the generated
+  replay scripts on a fresh fork. AI caught its own bug (integer width in argument generation).
