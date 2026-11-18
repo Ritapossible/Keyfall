@@ -30,17 +30,21 @@ export function mldsa() {
 
 export const toQor = (addr) => bech32.encode('qor', bech32.toWords(Buffer.from(addr.slice(2), 'hex')));
 
-export function compileRegistry() {
-  const src = readFileSync(new URL('../src/KeyfallRegistry.sol', import.meta.url), 'utf8');
+const ROOT = new URL('../', import.meta.url);
+/** Compile `relPath` (relative to repo root) with solc 0.8.28 and return {abi, bytecode} of `name`. */
+export function compile(relPath, name) {
   const input = {
     language: 'Solidity',
-    sources: { 'KeyfallRegistry.sol': { content: src } },
+    sources: { [relPath]: { content: readFileSync(new URL(relPath, ROOT), 'utf8') } },
     settings: { optimizer: { enabled: true, runs: 200 }, evmVersion: 'paris',
-      outputSelection: { '*': { '*': ['abi', 'evm.bytecode.object'] } } },
+      outputSelection: { '*': { '*': ['abi', 'evm.bytecode.object', 'evm.deployedBytecode.object'] } } },
   };
-  const out = JSON.parse(solc.compile(JSON.stringify(input)));
+  const findImports = (p) => { try { return { contents: readFileSync(new URL(p, ROOT), 'utf8') }; } catch { return { error: 'not found: ' + p }; } };
+  const out = JSON.parse(solc.compile(JSON.stringify(input), { import: findImports }));
   const errs = (out.errors ?? []).filter((e) => e.severity === 'error');
   if (errs.length) throw new Error(errs.map((e) => e.formattedMessage).join('\n'));
-  const c = out.contracts['KeyfallRegistry.sol'].KeyfallRegistry;
-  return { abi: c.abi, bytecode: `0x${c.evm.bytecode.object}` };
+  const c = out.contracts[relPath][name];
+  return { abi: c.abi, bytecode: `0x${c.evm.bytecode.object}`, deployedBytecode: `0x${c.evm.deployedBytecode.object}` };
 }
+
+export const compileRegistry = () => compile('src/KeyfallRegistry.sol', 'KeyfallRegistry');

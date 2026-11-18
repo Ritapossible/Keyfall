@@ -4,5 +4,27 @@
   "KeyfallRegistry": "0x3cc2c6ccbf30ea28d683a1df3ac8576169eeaf60",
   "deployTx": "0xe70681ba626532f68249b213eb4e9001e08c883ff80132fd7d85264bcd72f23b",
   "keyHash": "0x0e4efe1dbf70d666c0c521ca48236be17f29532d7c840a6e9ebdb366739c6ebe",
-  "block": 10276421
+  "block": 10276421,
+  "bench": {
+    "ownerKeyHash": "0x54c1c302be79fded95f95f1e468664597c9b23ec77cd676ebb900867e400a550",
+    "guardian": "0x8ad48346fc47f920de6c4e56f0837b5c21d25102",
+    "SafeVault": {
+      "address": "0xb03b09742168f16a5a8f75b0a744788370a421d3",
+      "deployTx": "0xcc4788e006e1bb22c8e49dc5605e894cb87325bf0aac4f783a6b3bdd6b8a075d",
+      "block": 10311019,
+      "legitWithdrawTx": "0x73a922c7c33978d6231fdd9313811de1a2ab4784d86b49996d98925158f91bdb"
+    },
+    "UnguardedSetter": {
+      "address": "0x67508e00454a1f66bf4564c8a3c3b913c878b1b1",
+      "deployTx": "0xcac50f4b2769bbe683b2f2a6ca5d84f7e0c97fc64a09a387af8a40665dc2c7f9",
+      "block": 10311025,
+      "legitWithdrawTx": "0x4f6c06539be66bd9402fc065781d3e4253d7d7f754dcd43175831c5cfa297ed0"
+    },
+    "NoNonce": {
+      "address": "0xc1a690a79d4f7cbd2ada7925ae5454f3a2783ad9",
+      "deployTx": "0xa7ffb6a2e069fcc3b32366dd8285e63d6d37d1730ec118577427174d5a8377c3",
+      "block": 10311028,
+      "legitWithdrawTx": "0x07892e70569f20c5129b1b028ce08e5272ea5443fbf9b0dc02c69730e8701661"
+    }
+  }
 }
