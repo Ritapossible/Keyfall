@@ -29,11 +29,11 @@ Final deadline: **2 Dec 2026, 23:59 UTC**. Tick boxes as work lands, and keep `C
   2. `SafeTimelockVault`: correct, with a timelock
   3. `UnguardedSetter` ✅ deployed: `setGuardian` without PQC
   4. `NoNonce` ✅ deployed: a PQC-signed withdraw can be replayed
-  5. `NoDomain`: the signature isn't bound to the contract, so it replays across two instances
+  5. `NoDomain` ✅ deployed (A/B pair): the signature isn't bound to the contract, so it replays across two instances
   6. `NoDeadline`: an old signature is valid forever (only matters with nonce gaps)
   7. `ActionConfusion`: the same digest is accepted for withdraw and setLimit
   8. `MsgSenderOwner`: `onlyOwner` via `msg.sender`
-  9. `TimelockBypass`: `setDelay(0)` → `queue` → `execute`, all classical
+  9. `TimelockBypass` (covered in spirit by `RecoveryVault` ✅, a two-step escalation): `setDelay(0)` → `queue` → `execute`, all classical
   10. `UpgradeableNoPQC`: UUPS `upgradeTo` gated by `msg.sender`
 - [ ] Deploy all 10 to testnet (more testnet addresses for the page)
 

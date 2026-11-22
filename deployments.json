@@ -25,6 +25,23 @@
       "deployTx": "0xa7ffb6a2e069fcc3b32366dd8285e63d6d37d1730ec118577427174d5a8377c3",
       "block": 10311028,
       "legitWithdrawTx": "0x07892e70569f20c5129b1b028ce08e5272ea5443fbf9b0dc02c69730e8701661"
+    },
+    "RecoveryVault": {
+      "address": "0xca9171c2d60a43f57fcaa23e7bbfdf2dd7d32254",
+      "deployTx": "0x32641bfec76c0fba5e1d5a35e7a4f67de593a31cea8aa94d38fd5a1ea8e2e8a9",
+      "block": 10539187,
+      "legitWithdrawTx": "0x30d2c9648a8099ebfe45e61361a4d8e901536d3ad14ec31743d448fc156ceb56"
+    },
+    "NoDomainA": {
+      "address": "0x371a51d1f42ad6e9df0f4b03d326711511c3ed7b",
+      "deployTx": "0x596604e9e0629f8f4fa46bc6c9cd8d3c4deaa30238ed75da7e6a6deaa406916c",
+      "block": 10539190,
+      "legitWithdrawTx": "0x0a8b87a336ee11837a70a28f66d114de34b2045560441a9c0f0418f475f3923b"
+    },
+    "NoDomainB": {
+      "address": "0xebf86aedc6baefdfbc5272ff118b460de3e0c6f4",
+      "deployTx": "0x966eb916731f22122f9a795e4f25e51e4a4fac0e0714be4a22cd128cc3e221b3",
+      "block": 10539192
     }
   }
 }

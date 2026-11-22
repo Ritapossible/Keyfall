@@ -55,3 +55,5 @@ every work session.
   verdicts free of AI judgement: replayed signatures are checked with real ML-DSA-87, severity is a fixed
   rule. Verified by scanning all four contracts (expected results matched) and running the generated
   replay scripts on a fresh fork. AI caught its own bug (integer width in argument generation).
+- **22 Nov.** AI added two-step sequences and cross-contract replay, plus two benchmarks to prove them.
+  Verified the same way: expected verdicts, standalone replays, and a regression rescan of the first four.

@@ -1,0 +1,9 @@
+{
+  "registry": "0x3cc2c6ccbf30ea28d683a1df3ac8576169eeaf60",
+  "reportHash": "0x50d64b61b6c2f04ae7d1e27ac855dc9b430831facfa1c7e3cd20f580899a3928",
+  "anchorTx": "0x74b1a94b07e2445f6509569782a2d934cad6d31c75fd6028739f306d1f787591",
+  "block": 10539332,
+  "target": "0xCA9171c2D60A43F57FCaa23e7BBFDF2DD7D32254",
+  "findings": 2,
+  "verify": "cast call 0x3cc2c6ccbf30ea28d683a1df3ac8576169eeaf60 \"reports(bytes32)(address,bytes32,uint64,uint64,uint32)\" 0x50d64b61b6c2f04ae7d1e27ac855dc9b430831facfa1c7e3cd20f580899a3928 --rpc-url https://evm-testnet.qore.host"
+}

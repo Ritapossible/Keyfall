@@ -118,7 +118,11 @@ them in `.env` or `keys/` (both gitignored).
 - [x] 4 reports anchored in KeyfallRegistry (`scripts/anchor-report.mjs`, `reports/*/attestation.json`).
 - [x] Benchmark vaults deployed (`deployments.json` → `bench`), owner key `keys/bench-mldsa87.json`.
 - Foundry lives in the session scratchpad; set `KEYFALL_ANVIL` or put anvil on PATH.
-- Next: see `docs/PLAN.md` → Milestone 3 remainder (more benchmarks, sequences/fuzz, explorer-less ABI).
+- [x] **Scanner v0.2 (22 Nov):** two-step sequences + cross-contract replay (`--harvest-from`). New benchmarks
+  RecoveryVault (Critical via sequence) and NoDomain A/B (Critical cross-contract). 6 reports re-anchored; all
+  replay scripts for new kinds verified standalone. Regression: original 4 unchanged.
+- Known limit: cross-contract replay needs the sibling named (`--harvest-from`); no explorer to discover it.
+- Next: opt-in scans of real hackathon contracts (user does outreach), README/video, report viewer.
 
 ## Log
 
@@ -131,3 +135,5 @@ them in `.env` or `keys/` (both gitignored).
   (report.json + replay) before anything else.
 - **18 Nov (later).** Built it: 3 benchmark vaults on testnet, scanner v0, 4 reports anchored on-chain. All
   results correct. Deployer EVM window reopened (17,280 blocks, 200 txs, 40 QOR).
+- **22 Nov.** Scanner v0.2: sequences and cross-contract replay; 2 new benchmarks (3 contracts) deployed; window
+  reopened again (windows last ~6 h, reopen with `node scripts/setup-evm-access.mjs 17280 200 40`).

@@ -75,15 +75,15 @@ target address
 - Invariants checked after every call:
   - `ValueOut`: the target's native and token balances did not fall to an attacker-controlled address.
   - `ControlStable`: owner/admin getters, the EIP-1967 slots and the PQC key binding are unchanged.
-- Sequence depth: up to 3 (Foundry `invariant.depth`).
+- Sequence depth: v0.2 tries every successful call followed by every call (depth 2) in Node; depth 3
+  and fuzzing via Foundry invariants are next.
 
 ### 3. Replay harvester (the QoreChain-native part)
-- Collect every past transaction to the target (explorer API, or scan `eth_getLogs` plus
-  blocks), and keep those whose calldata contains a 4627-byte segment, i.e. likely carrying an
-  ML-DSA-87 signature.
-- In the Q-Day world **with the real verification semantics** (the stub replaced by an oracle
-  table of `(pubkey, msg, sig)` triples observed as valid on-chain), resubmit each one from an
-  attacker address, as-is and with the `to`/`amount`-style arguments mutated.
+- Collect every past transaction to the target from `eth_getLogs` (10k-block chunks; the explorer has
+  no API), plus any `--harvest-from` sibling contracts.
+- Resubmit each one from an attacker address with the precompile stubbed to accept, trace the tx
+  (`callTracer`), and verify every precompile input off-chain with ML-DSA-87. The replay counts only
+  if every signature is genuinely valid, so the fork matches the real chain exactly.
 - A finding means the contract accepted an old authorization again (no nonce), in another
   context (no domain separation), or late (no deadline).
 

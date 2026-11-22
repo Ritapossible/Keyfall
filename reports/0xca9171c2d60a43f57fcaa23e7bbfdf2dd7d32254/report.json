@@ -1,0 +1,120 @@
+{
+  "keyfall": "0.2.0",
+  "network": "qorechain-diana",
+  "chainId": 9800,
+  "target": "0xCA9171c2D60A43F57FCaa23e7BBFDF2DD7D32254",
+  "codeHash": "0x6a8f0bb155f4b16d208007bca000ea839a36cbff96b1a0cc06fe1a969e996b02",
+  "source": {
+    "file": "bench/RecoveryVault.sol",
+    "contract": "RecoveryVault",
+    "bytecodeMatches": true
+  },
+  "forkBlock": "10539201",
+  "createdBlock": "10539187",
+  "deployer": "0x3184924416dF6C43b4c66171fBc75121fF27465B",
+  "threatModel": "attacker holds the classical ECDSA key of every privileged account and sees all past calldata; cannot forge ML-DSA-87",
+  "accounts": {
+    "attacker": "0x01b1BdF5851fa31CF0184685Dbd6aa4F283b8E55",
+    "privileged": {
+      "0x3184924416dF6C43b4c66171fBc75121fF27465B": "owner()"
+    }
+  },
+  "coverage": {
+    "functions": [
+      "recover(address)",
+      "setRecoveryAgent(address)",
+      "withdraw(address,uint256,uint256,bytes,bytes)"
+    ],
+    "qdayCalls": 14,
+    "sequenceCalls": 13,
+    "harvestedFrom": [
+      "0xCA9171c2D60A43F57FCaa23e7BBFDF2DD7D32254"
+    ],
+    "harvestedTxs": 1,
+    "replays": [
+      {
+        "sourceTx": "0x30d2c9648a8099ebfe45e61361a4d8e901536d3ad14ec31743d448fc156ceb56",
+        "function": "withdraw(address,uint256,uint256,bytes,bytes)",
+        "replayed": true,
+        "pqcChecks": 1,
+        "allSignaturesValid": false
+      }
+    ]
+  },
+  "callableWithoutEffect": [],
+  "leakSurface": 2,
+  "summary": {
+    "critical": 1,
+    "high": 1,
+    "medium": 0
+  },
+  "findings": [
+    {
+      "severity": "Critical",
+      "layer": "contract",
+      "kind": "sequence",
+      "title": "setRecoveryAgent(address) as owner(), then recover(address) as attacker (no keys), without any PQC signature",
+      "function": "setRecoveryAgent(address) → recover(address)",
+      "caller": "0x3184924416dF6C43b4c66171fBc75121fF27465B",
+      "callerRole": "owner()",
+      "calldata": "0x9bac766900000000000000000000000001b1bdf5851fa31cf0184685dbd6aa4f283b8e55",
+      "steps": [
+        {
+          "function": "setRecoveryAgent(address)",
+          "caller": "0x3184924416dF6C43b4c66171fBc75121fF27465B",
+          "callerRole": "owner()",
+          "calldata": "0x9bac766900000000000000000000000001b1bdf5851fa31cf0184685dbd6aa4f283b8e55"
+        },
+        {
+          "function": "recover(address)",
+          "caller": "0x01b1BdF5851fa31CF0184685Dbd6aa4F283b8E55",
+          "callerRole": "attacker (no keys)",
+          "calldata": "0x0cd865ec00000000000000000000000001b1bdf5851fa31cf0184685dbd6aa4f283b8e55"
+        }
+      ],
+      "valueOut": "900000000000000000",
+      "changes": [
+        {
+          "getter": "recoveryAgent()",
+          "before": "0x0000000000000000000000000000000000000000",
+          "after": "0x01b1BdF5851fa31CF0184685Dbd6aa4F283b8E55"
+        }
+      ],
+      "id": "KF-01",
+      "valueOutQOR": "0.9"
+    },
+    {
+      "severity": "High",
+      "layer": "contract",
+      "kind": "unguarded",
+      "title": "setRecoveryAgent(address) succeeds for owner() without any PQC signature",
+      "function": "setRecoveryAgent(address)",
+      "caller": "0x3184924416dF6C43b4c66171fBc75121fF27465B",
+      "callerRole": "owner()",
+      "calldata": "0x9bac766900000000000000000000000001b1bdf5851fa31cf0184685dbd6aa4f283b8e55",
+      "steps": [
+        {
+          "function": "setRecoveryAgent(address)",
+          "caller": "0x3184924416dF6C43b4c66171fBc75121fF27465B",
+          "callerRole": "owner()",
+          "calldata": "0x9bac766900000000000000000000000001b1bdf5851fa31cf0184685dbd6aa4f283b8e55"
+        }
+      ],
+      "valueOut": "0",
+      "changes": [
+        {
+          "getter": "recoveryAgent()",
+          "before": "0x0000000000000000000000000000000000000000",
+          "after": "0x01b1BdF5851fa31CF0184685Dbd6aa4F283b8E55"
+        }
+      ],
+      "id": "KF-02",
+      "valueOutQOR": "0"
+    }
+  ],
+  "limits": [
+    "A clean result means nothing was found in these runs, not proof of safety.",
+    "Protocol-layer admission (EVM windows) is not modelled on the fork.",
+    "Sequences up to two calls; fixed argument candidates (no fuzzing yet)."
+  ]
+}

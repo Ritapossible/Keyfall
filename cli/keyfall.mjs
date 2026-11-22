@@ -23,7 +23,7 @@ import {
 import { ml_dsa87 } from '@noble/post-quantum/ml-dsa.js';
 import { compile, qore } from '../scripts/lib.mjs';
 
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 const PQC = '0x0000000000000000000000000000000000000a01';
 const STUB_REJECT = '0x600060005260206000f3'; // returns abi.encode(false)
 const STUB_ACCEPT = '0x600160005260206000f3'; // returns abi.encode(true)
@@ -170,11 +170,14 @@ const replayScript = (f) => [
   'set -euo pipefail',
   `anvil --fork-url ${RPC} --fork-block-number ${forkBlock} --chain-id 9800 --port 8555 --silent & ANVIL=$!; trap "kill $ANVIL" EXIT; sleep 6`,
   'R=http://127.0.0.1:8555',
-  `cast rpc anvil_setCode ${PQC} ${f.kind === 'replay' ? STUB_ACCEPT : STUB_REJECT} --rpc-url $R >/dev/null  # ${f.kind === 'replay' ? 'accept: every signature in this replay was verified valid off-chain' : 'reject: attacker has no ML-DSA-87 key'}`,
-  `cast rpc anvil_impersonateAccount ${f.caller} --rpc-url $R >/dev/null`,
-  `cast rpc anvil_setBalance ${f.caller} 0x3635c9adc5dea00000 --rpc-url $R >/dev/null`,
+  `cast rpc anvil_setCode ${PQC} ${f.kind.includes('replay') ? STUB_ACCEPT : STUB_REJECT} --rpc-url $R >/dev/null  # ${f.kind.includes('replay') ? 'accept: every signature in this replay was verified valid off-chain' : 'reject: attacker has no ML-DSA-87 key'}`,
   `echo "target balance before: $(cast balance ${target} --rpc-url $R)"`,
-  `cast send --unlocked --from ${f.caller} ${target} ${f.calldata} --gas-limit 15000000 --rpc-url $R >/dev/null`,
+  ...f.steps.flatMap((st, i) => [
+    `# step ${i + 1}: ${st.function} as ${st.callerRole}`,
+    `cast rpc anvil_impersonateAccount ${st.caller} --rpc-url $R >/dev/null`,
+    `cast rpc anvil_setBalance ${st.caller} 0x3635c9adc5dea00000 --rpc-url $R >/dev/null`,
+    `cast send --unlocked --from ${st.caller} ${target} ${st.calldata} --gas-limit 15000000 --rpc-url $R >/dev/null`,
+  ]),
   `echo "target balance after:  $(cast balance ${target} --rpc-url $R)"`,
   ...f.changes.map((c) => `echo "${c.getter}: $(cast call ${target} '${c.getter.replace('()', '')}()' --rpc-url $R)"`),
   '',
@@ -184,6 +187,8 @@ const replayScript = (f) => [
 await test.setCode({ address: PQC, bytecode: STUB_REJECT });
 const qdaySnap = await test.snapshot();
 let qdayCalls = 0;
+const enablers = []; // successful single calls, the first step of possible sequences
+const step = (f, caller, role, data) => ({ function: toFunctionSignature(f), caller, callerRole: role, calldata: data });
 for (const f of mutating) {
   const sig = toFunctionSignature(f);
   let found = false;
@@ -199,9 +204,10 @@ for (const f of mutating) {
       if (r.ok) {
         const d = diff(before, await snapshotState());
         const sev = classify(d);
+        enablers.push({ ...step(f, caller, role, data), severity: sev });
         if (sev) {
           findings.push({ severity: sev, layer: 'contract', kind: 'unguarded', title: `${sig} succeeds for ${role} without any PQC signature`,
-            function: sig, caller, callerRole: role, calldata: data, valueOut: d.valueOut, changes: d.changes });
+            function: sig, caller, callerRole: role, calldata: data, steps: [step(f, caller, role, data)], valueOut: d.valueOut, changes: d.changes });
           found = true;
         } else callable.push({ function: sig, caller: role });
       }
@@ -210,20 +216,61 @@ for (const f of mutating) {
     }
   }
 }
+// two-step sequences: every successful first call, followed by every function as every caller.
+// Reported only when the pair is strictly worse than anything either step does alone.
+const RANK = { Critical: 3, High: 2, Medium: 1 };
+const worstSingle = (sig) => Math.max(0, ...findings.filter((x) => x.function === sig).map((x) => RANK[x.severity]));
+let seqCalls = 0;
+for (const e of enablers) {
+  for (const f2 of mutating) {
+    let done = false;
+    for (const [caller, role] of callers) {
+      if (done) break;
+      for (const args of argSets(f2, await balanceOf(target))) {
+        const data = encodeFunctionData({ abi: [f2], functionName: f2.name, args });
+        const snap = await test.snapshot();
+        const before = await snapshotState();
+        let r1, r2;
+        try { r1 = await execAs(e.caller, e.calldata); } catch { r1 = { ok: false }; }
+        if (r1.ok) { try { r2 = await execAs(caller, data); } catch { r2 = { ok: false }; } seqCalls++; }
+        if (r1.ok && r2.ok) {
+          const d = diff(before, await snapshotState());
+          const sev = classify(d);
+          const f2sig = toFunctionSignature(f2);
+          if (sev && RANK[sev] > Math.max(RANK[e.severity] ?? 0, worstSingle(f2sig), worstSingle(e.function))) {
+            findings.push({ severity: sev, layer: 'contract', kind: 'sequence',
+              title: `${e.function} as ${e.callerRole}, then ${f2sig} as ${role}, without any PQC signature`,
+              function: `${e.function} → ${f2sig}`, caller: e.caller, callerRole: e.callerRole, calldata: e.calldata,
+              steps: [e, step(f2, caller, role, data)].map(({ severity, ...st }) => st), valueOut: d.valueOut, changes: d.changes });
+            done = true;
+          }
+        }
+        await test.revert({ id: snap });
+        if (done) break;
+      }
+    }
+  }
+}
 await test.revert({ id: qdaySnap });
-log(`Q-Day world: ${qdayCalls} calls across ${mutating.length} functions and ${callers.length} callers`);
+log(`Q-Day world: ${qdayCalls} single calls + ${seqCalls} two-step sequences across ${mutating.length} functions and ${callers.length} callers`);
 
 // ------------------------------------------------------------------ Replay world
+// --harvest-from <address>: also harvest a sibling contract's history (e.g. one sharing the same
+// signing key) to catch signatures that are not bound to the contract they were made for.
+const sources = [target, ...opts('--harvest-from').map(getAddress)];
 async function harvest() {
-  const hashes = new Set();
-  for (let from = created.block; from <= forkBlock; from += 10000n) {
-    const to = from + 9999n > forkBlock ? forkBlock : from + 9999n;
-    for (const l of await live.getLogs({ address: target, fromBlock: from, toBlock: to })) hashes.add(l.transactionHash);
-  }
   const txs = [];
-  for (const h of hashes) {
-    const tx = await live.getTransaction({ hash: h });
-    if (tx.to && getAddress(tx.to) === target && tx.input !== '0x') txs.push(tx);
+  for (const src of sources) {
+    const hashes = new Set();
+    const start = src === target ? created.block : created.block > 30000n ? created.block - 30000n : 0n;
+    for (let from = start; from <= forkBlock; from += 10000n) {
+      const to = from + 9999n > forkBlock ? forkBlock : from + 9999n;
+      for (const l of await live.getLogs({ address: src, fromBlock: from, toBlock: to })) hashes.add(l.transactionHash);
+    }
+    for (const h of hashes) {
+      const tx = await live.getTransaction({ hash: h });
+      if (tx.to && getAddress(tx.to) === src && tx.input !== '0x') txs.push(tx);
+    }
   }
   return txs;
 }
@@ -258,9 +305,12 @@ for (const tx of history) {
       const d = diff(before, await snapshotState());
       const sev = classify(d);
       entry.effect = sev ?? 'none';
-      if (sev) findings.push({ severity: sev, layer: 'contract', kind: 'replay',
-        title: `replaying past PQC-authorized ${toFunctionSignature(f)} succeeds (signature accepted again)`,
-        function: toFunctionSignature(f), caller: attacker, callerRole: 'attacker (no keys)', sourceTx: tx.hash, calldata: tx.input,
+      const cross = getAddress(tx.to) !== target;
+      if (sev) findings.push({ severity: sev, layer: 'contract', kind: cross ? 'cross-contract-replay' : 'replay',
+        title: cross ? `a PQC-authorized ${toFunctionSignature(f)} made for ${getAddress(tx.to)} is accepted here too (signature not bound to this contract)`
+          : `replaying past PQC-authorized ${toFunctionSignature(f)} succeeds (signature accepted again)`,
+        function: toFunctionSignature(f), caller: attacker, callerRole: 'attacker (no keys)', sourceTx: tx.hash, sourceContract: tx.to, calldata: tx.input,
+        steps: [{ function: toFunctionSignature(f), caller: attacker, callerRole: 'attacker (no keys)', calldata: tx.input }],
         pqcChecks: calls.length, valueOut: d.valueOut, changes: d.changes });
     }
   }
@@ -281,10 +331,10 @@ const report = {
   forkBlock, createdBlock: created.block, deployer: created.deployer ?? null,
   threatModel: 'attacker holds the classical ECDSA key of every privileged account and sees all past calldata; cannot forge ML-DSA-87',
   accounts: { attacker, privileged: Object.fromEntries([...privileged].map(([a, r]) => [a, r])) },
-  coverage: { functions: mutating.map(toFunctionSignature), qdayCalls, harvestedTxs: history.length, replays: replayLog },
+  coverage: { functions: mutating.map(toFunctionSignature), qdayCalls, sequenceCalls: seqCalls, harvestedFrom: sources, harvestedTxs: history.length, replays: replayLog },
   callableWithoutEffect: callable,
   leakSurface: findings.length, summary, findings,
-  limits: ['A clean result means nothing was found in these runs, not proof of safety.', 'Protocol-layer admission (EVM windows) is not modelled on the fork.', 'v0: one call per function (no sequences), fixed argument candidates.'],
+  limits: ['A clean result means nothing was found in these runs, not proof of safety.', 'Protocol-layer admission (EVM windows) is not modelled on the fork.', 'Sequences up to two calls; fixed argument candidates (no fuzzing yet).'],
 };
 mkdirSync(join(outDir, 'replays'), { recursive: true });
 writeFileSync(join(outDir, 'report.json'), json(report) + '\n');

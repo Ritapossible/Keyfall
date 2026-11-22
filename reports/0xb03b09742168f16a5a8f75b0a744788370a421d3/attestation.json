@@ -1,9 +1,9 @@
 {
   "registry": "0x3cc2c6ccbf30ea28d683a1df3ac8576169eeaf60",
-  "reportHash": "0x86e80883236e65dac17b7adf06dc0c0fb741649aa0d3b6bb383dc0e45e9ef397",
-  "anchorTx": "0x1849ef295ce5fa0acb07e876990fa53608ac210bed2b78d12771c091b4dffbaa",
-  "block": 10311235,
+  "reportHash": "0xab7777ded80cf3490e5a09720ecd4e1e482ee0a2849d07512c0b7f16a40854bf",
+  "anchorTx": "0x96714af9e6999e28f1786597e95bace63b4930923091fd1ca17ca5ab208af711",
+  "block": 10539324,
   "target": "0xb03B09742168F16a5A8F75b0A744788370A421d3",
   "findings": 0,
-  "verify": "cast call 0x3cc2c6ccbf30ea28d683a1df3ac8576169eeaf60 \"reports(bytes32)(address,bytes32,uint64,uint64,uint32)\" 0x86e80883236e65dac17b7adf06dc0c0fb741649aa0d3b6bb383dc0e45e9ef397 --rpc-url https://evm-testnet.qore.host"
+  "verify": "cast call 0x3cc2c6ccbf30ea28d683a1df3ac8576169eeaf60 \"reports(bytes32)(address,bytes32,uint64,uint64,uint32)\" 0xab7777ded80cf3490e5a09720ecd4e1e482ee0a2849d07512c0b7f16a40854bf --rpc-url https://evm-testnet.qore.host"
 }

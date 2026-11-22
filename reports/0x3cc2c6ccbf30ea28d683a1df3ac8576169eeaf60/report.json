@@ -1,5 +1,5 @@
 {
-  "keyfall": "0.1.0",
+  "keyfall": "0.2.0",
   "network": "qorechain-diana",
   "chainId": 9800,
   "target": "0x3CC2c6CcbF30eA28d683a1dF3AC8576169EEaf60",
@@ -9,12 +9,12 @@
     "contract": "KeyfallRegistry",
     "bytecodeMatches": false
   },
-  "forkBlock": "10311162",
+  "forkBlock": "10539278",
   "createdBlock": "10276421",
   "deployer": "0x3184924416dF6C43b4c66171fBc75121fF27465B",
   "threatModel": "attacker holds the classical ECDSA key of every privileged account and sees all past calldata; cannot forge ML-DSA-87",
   "accounts": {
-    "attacker": "0x5d4ae448012a316a74ad1028B9C201c395Ae6726",
+    "attacker": "0x216761a869ce29701Bcd2a0D00e2fE64B550a435",
     "privileged": {
       "0x3184924416dF6C43b4c66171fBc75121fF27465B": "deployer"
     }
@@ -27,7 +27,11 @@
       "withdraw(address,uint256,uint256,bytes,bytes)"
     ],
     "qdayCalls": 32,
-    "harvestedTxs": 3,
+    "sequenceCalls": 0,
+    "harvestedFrom": [
+      "0x3CC2c6CcbF30eA28d683a1dF3AC8576169EEaf60"
+    ],
+    "harvestedTxs": 7,
     "replays": [
       {
         "sourceTx": "0x2afc1f8db6f75e62be52a60fe4162b4e0e7b86ec5b943cb9f57c1dacd539a7e2",
@@ -43,6 +47,26 @@
         "sourceTx": "0x5e07c77f6bb314a23690af766ced0c816d9ca2dae39c10343200637b1b2ef5c0",
         "function": "cancel(uint256,uint256,bytes,bytes)",
         "replayed": false
+      },
+      {
+        "sourceTx": "0xad33fe3cbf7f5fd7fd5d24e70504ebb7d0dda7dbe09230396e01bb4a0950764e",
+        "function": "anchorReport(bytes32,(address,bytes32,uint64,uint64,uint32),uint256,bytes,bytes)",
+        "replayed": false
+      },
+      {
+        "sourceTx": "0x1849ef295ce5fa0acb07e876990fa53608ac210bed2b78d12771c091b4dffbaa",
+        "function": "anchorReport(bytes32,(address,bytes32,uint64,uint64,uint32),uint256,bytes,bytes)",
+        "replayed": false
+      },
+      {
+        "sourceTx": "0x8bf63243d7018ab462bca6eb5511526a3c77f785040500c51d5171c7a6fde13a",
+        "function": "anchorReport(bytes32,(address,bytes32,uint64,uint64,uint32),uint256,bytes,bytes)",
+        "replayed": false
+      },
+      {
+        "sourceTx": "0x41cf3f30e1ae07a3ad4de4cea28343ff407bca80979bac23797511984a525eb5",
+        "function": "anchorReport(bytes32,(address,bytes32,uint64,uint64,uint32),uint256,bytes,bytes)",
+        "replayed": false
       }
     ]
   },
@@ -57,6 +81,6 @@
   "limits": [
     "A clean result means nothing was found in these runs, not proof of safety.",
     "Protocol-layer admission (EVM windows) is not modelled on the fork.",
-    "v0: one call per function (no sequences), fixed argument candidates."
+    "Sequences up to two calls; fixed argument candidates (no fuzzing yet)."
   ]
 }
